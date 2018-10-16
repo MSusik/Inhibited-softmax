@@ -93,9 +93,7 @@ class ISCifar(Cifar):
         self.act = Activation()
 
     def cauchy_activation(self, x):
-        return self.act(x)
-        # return 1 / (1 + x ** 2)
-        # return 0.5*(1+torch.cos(x*pi))
+        return 1 / (1 + x ** 2)
 
     def forward(self, x):
         conved1 = self.relu(

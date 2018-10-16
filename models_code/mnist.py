@@ -90,11 +90,7 @@ class ISMnist(Mnist):
         self.bar = bar
 
     def cauchy_activation(self, x):
-        # return 1 + np.cos(x * np.pi)
-        return 1 / (1 + 10 * x ** 2)
-        # return torch.exp(-x**2/2)
-        # return self.act(x)
-        
+        return 1 / (1 + x ** 2)
 
     def forward(self, x):
         conved1 = self.maxpool(self.relu(self.conv1(x)))  # 6, 14, 14
