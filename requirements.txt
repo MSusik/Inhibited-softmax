@@ -7,4 +7,7 @@ matplotlib
 torchvision
 Pillow
 torchwordemb
+gensim
+bs4
+lxml
 

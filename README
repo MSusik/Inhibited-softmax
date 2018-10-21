@@ -5,11 +5,13 @@ Please note:
 * In order to run experiments you have to download datasets and put them in correct directories
 * Before running sentiment models, firstly you have to run preprocessing notebook
 
+I provide a script download.sh that downloads all the required files.
+
 The datasets that have to be downloaded:
 * NOTMNIST - place in ./notMNIST_small - in case some of the images are corrupted, remove them
 * Omniglot - ./omniglot
 * LFW-a - ./lfw-a
-* Reuters-21578 - ./nonmovies
+* Reuters-21578 - ./nonmovies/reuters21578
 * Customer Review data - ./nonmovies/customer\ review\ data
 * Review Polarity - ./nonmovies/review_polarity
 * Movie Reviews (IMDB) - ./movies/aclImdb
