@@ -16,6 +16,7 @@ class MonteCarloDropout(torch.nn.Dropout):
     def forward(self, x):
         return torch.nn.functional.dropout(x, self.p, True, self.inplace)
 
+
 class MinOfTwo(torch.nn.Module):
     """ Simple Hack for 1D min pooling. Input size = (N, C, L_in)
         Output size = (N, C, L_out) where N = Batch Size, C = No. Channels
@@ -121,6 +122,43 @@ class ISMnist(Mnist):
         return dense2
 
 
+class EDLMnist(Mnist):
+    def __init__(self):
+        super(EDLMnist, self).__init__()
+
+        self.dropout = nn.Dropout(0.5)
+
+        torch.nn.init.xavier_uniform(self.conv1.weight, gain=1.5)
+        torch.nn.init.xavier_uniform(self.conv2.weight, gain=1.5)
+        torch.nn.init.xavier_uniform(self.dense1.weight, gain=1.5)
+        torch.nn.init.xavier_uniform(self.dense2.weight, gain=1.5)
+        torch.nn.init.xavier_uniform(self.dense3.weight, gain=1.5)
+
+    def forward(self, x):
+        conved1 = self.maxpool(self.relu(self.conv1(x)))  # 6, 14, 14
+        conved2 = self.maxpool(self.relu(self.conv2(conved1)))  # 16, 5, 5
+
+        dense1 = self.relu(self.dense1(conved2.view(-1, 400)))
+        dense2 = self.dropout(self.relu(self.dense2(dense1)))
+        dense3 = self.relu(self.dense3(dense2))
+        # No softmax here
+
+        alpha = dense3 + 1
+
+        # print('FORWARD')
+        # print(alpha)
+        # print(torch.max(alpha, dim=0)[0])
+        # print('afterFORWARD')
+
+        # alpha_sum = torch.sum(alpha)
+
+        #   u = 10 / alpha_sum
+
+        # prob = alpha / alpha_sum
+
+        return alpha
+
+
 class MCMnist(Mnist):
 
     def __init__(self):
@@ -158,10 +196,16 @@ def train(
         data = data.cuda()
         optimizer.zero_grad()
         y_ = model(data.view(-1, channels, 32, 32))
-        loss = loss_function(y_, Variable(y).cuda())
+        loss = loss_function(
+            y_,
+            Variable(y).cuda(),
+            epoch * num_batches + batch_idx,
+            batch_idx*10
+        )
         loss.backward()
         train_loss += loss.data[0]
         optimizer.step()
+
 
         accuracy += accuracy_score(y, np.argmax(y_.cpu().data.numpy(), axis=1))
         if batch_idx % log_interval == 0:
@@ -195,7 +239,7 @@ def test(
         y_s.append(softmax(y_).cpu().data.numpy())
         ys.append(y)
 
-        test_loss += loss_function(y_, Variable(y).cuda()).data[0]
+        # test_loss += loss_function(y_, Variable(y).cuda()).data[0]
 
     test_loss /= len(test_loader.dataset)
     print('====> Test set loss: {:.4f}'.format(test_loss))
