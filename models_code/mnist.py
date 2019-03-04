@@ -160,7 +160,7 @@ def train(
         y_ = model(data.view(-1, channels, 32, 32))
         loss = loss_function(y_, Variable(y).cuda())
         loss.backward()
-        train_loss += loss.data[0]
+        train_loss += loss.item()
         optimizer.step()
 
         accuracy += accuracy_score(y, np.argmax(y_.cpu().data.numpy(), axis=1))
@@ -168,7 +168,7 @@ def train(
             print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
                 epoch, batch_idx * len(data), len(train_loader.dataset),
                        100. * batch_idx / len(train_loader),
-                       loss.data[0] / len(data)))
+                       loss.item() / len(data)))
 
     print('====> Epoch: {} Average loss: {:.4f} Average accuracy: {:.4f}'.format(
           epoch, train_loss / len(train_loader.dataset), accuracy / num_batches))
@@ -195,7 +195,7 @@ def test(
         y_s.append(softmax(y_).cpu().data.numpy())
         ys.append(y)
 
-        test_loss += loss_function(y_, Variable(y).cuda()).data[0]
+        test_loss += loss_function(y_, Variable(y).cuda()).item()
 
     test_loss /= len(test_loader.dataset)
     print('====> Test set loss: {:.4f}'.format(test_loss))

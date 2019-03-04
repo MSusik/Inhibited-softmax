@@ -78,7 +78,7 @@ def train_autoencoder(epoch, train_loader, log_interval, model, optimizer):
         recon_batch, mu, logvar = model(data)
         loss = loss_function(recon_batch, data.view(-1, 1024), mu, logvar)
         loss.backward()
-        train_loss += loss.data[0]
+        train_loss += loss.item()
         optimizer.step()
         if batch_idx % log_interval == 0:
             print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
@@ -86,7 +86,7 @@ def train_autoencoder(epoch, train_loader, log_interval, model, optimizer):
                 batch_idx * len(data),
                 len(train_loader.dataset),
                 100. * batch_idx / len(train_loader),
-                loss.data[0] / len(data)
+                loss.item() / len(data)
             ))
 
     print('====> Epoch: {} Average loss: {:.4f}'.format(
@@ -105,7 +105,7 @@ def test_autoencoder(test_loader, model):
             data.view(-1, 1, 32, 32),
             mu,
             logvar
-        ).data[0]
+        ).item()
 
     test_loss /= len(test_loader.dataset)
     print('====> Test set loss: {:.4f}'.format(test_loss))

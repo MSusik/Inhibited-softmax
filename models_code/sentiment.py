@@ -110,7 +110,7 @@ def train_sentiment(
             # CrossEntropyLoss
             loss = loss_function(y_, Variable(y).cuda())
         loss.backward()
-        train_loss += loss.data[0]
+        train_loss += loss.item()
         optimizer.step()
 
         if bce:
@@ -122,7 +122,7 @@ def train_sentiment(
             print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
                 epoch, batch_idx * len(data), 25000,
                        100. * batch_idx / 250,
-                       loss.data[0] / len(data)))
+                       loss.item() / len(data)))
 
     print('====> Epoch: {} Average loss: {:.4f} Average accuracy: {:.4f}'.format(
           epoch, train_loss / 25000, accuracy / 250))
@@ -152,9 +152,9 @@ def test_sentiment(
         ys.append(y)
 
         if bce:
-            test_loss += loss_function(y_, Variable(y.float().view((100, 1))).cuda()).data[0]
+            test_loss += loss_function(y_, Variable(y.float().view((100, 1))).cuda()).item()
         else:
-            test_loss += loss_function(y_, Variable(y).cuda()).data[0]
+            test_loss += loss_function(y_, Variable(y).cuda()).item()
 
     test_loss /= 25000
     print('====> Test set loss: {:.4f}'.format(test_loss))
