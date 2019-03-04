@@ -98,14 +98,17 @@ class ISMnist(Mnist):
         conved2 = self.maxpool(self.relu(self.conv2(conved1)))  # 16, 5, 5
 
         dense1 = self.relu(self.dense1(conved2.view(-1, 400)))
-        dense2 = self.cauchy_activation(self.dense2(dense1))
+        dense2 = self.act(self.dense2(dense1))
         dense3 = self.dense3(dense2)
         # Softmax implicit in CrossEntropyLoss
 
         batch_size = conved1.shape[0]
-        inhibited_channel = Variable(
-            torch.ones((batch_size, 1)) * self.bar
-        ).cuda()
+        #inhibited_channel = Variable(
+        #    torch.ones((batch_size, 1)) * self.bar
+        #).cuda()
+        inhibited_channel = (
+            dense2.sum(dim=1)
+        ).reshape(-1,1) * self.bar
 
         with_inhibited = torch.cat((dense3, inhibited_channel), dim=1)
 
@@ -198,12 +201,10 @@ def train(
         y_ = model(data.view(-1, channels, 32, 32))
         loss = loss_function(
             y_,
-            Variable(y).cuda(),
-            epoch * num_batches + batch_idx,
-            batch_idx*10
+            Variable(y).cuda()
         )
         loss.backward()
-        train_loss += loss.data[0]
+        train_loss += loss.item()
         optimizer.step()
 
 
@@ -212,7 +213,7 @@ def train(
             print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
                 epoch, batch_idx * len(data), len(train_loader.dataset),
                        100. * batch_idx / len(train_loader),
-                       loss.data[0] / len(data)))
+                       loss.item() / len(data)))
 
     print('====> Epoch: {} Average loss: {:.4f} Average accuracy: {:.4f}'.format(
           epoch, train_loss / len(train_loader.dataset), accuracy / num_batches))

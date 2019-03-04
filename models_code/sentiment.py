@@ -5,6 +5,8 @@ from sklearn.metrics import accuracy_score
 from torch.autograd import Variable
 from torch import nn
 
+from .mnist import Activation
+
 
 class Movie(nn.Module):
     def __init__(self):
@@ -40,21 +42,18 @@ class ISMovie(Movie):
     def __init__(self):
         super(ISMovie, self).__init__()
         self.dense = nn.Linear(50, 2, bias=False)
-
-    def cauchy_activation(self, x):
-        return 1 / (1 + x ** 2)
+        self.activation = Activation()
 
     def forward(self, x):
 
         embedded = self.embedding(x)
         pooled = torch.mean(embedded, dim=1)
-        pooled = self.cauchy_activation(pooled)
+        pooled = self.activation(pooled)
         out = self.dense(pooled)
 
-        batch_size = x.shape[0]
-        inhibited_channel = Variable(
-            torch.zeros((batch_size, 1))
-        ).cuda()
+        inhibited_channel = (
+            pooled.sum(dim=1)
+        ).reshape(-1,1) * 0.05
 
         with_inhibited = torch.cat((out, inhibited_channel), dim=1)
 
@@ -110,7 +109,7 @@ def train_sentiment(
             # CrossEntropyLoss
             loss = loss_function(y_, Variable(y).cuda())
         loss.backward()
-        train_loss += loss.data[0]
+        train_loss += loss.item()
         optimizer.step()
 
         if bce:
@@ -122,7 +121,7 @@ def train_sentiment(
             print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
                 epoch, batch_idx * len(data), 25000,
                        100. * batch_idx / 250,
-                       loss.data[0] / len(data)))
+                       loss.item() / len(data)))
 
     print('====> Epoch: {} Average loss: {:.4f} Average accuracy: {:.4f}'.format(
           epoch, train_loss / 25000, accuracy / 250))
@@ -152,9 +151,9 @@ def test_sentiment(
         ys.append(y)
 
         if bce:
-            test_loss += loss_function(y_, Variable(y.float().view((100, 1))).cuda()).data[0]
+            test_loss += loss_function(y_, Variable(y.float().view((100, 1))).cuda()).item()
         else:
-            test_loss += loss_function(y_, Variable(y).cuda()).data[0]
+            test_loss += loss_function(y_, Variable(y).cuda()).item()
 
     test_loss /= 25000
     print('====> Test set loss: {:.4f}'.format(test_loss))

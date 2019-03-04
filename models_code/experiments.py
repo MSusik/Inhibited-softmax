@@ -123,7 +123,7 @@ def load_lfw(batch_size):
     kwargs = {'num_workers': 2, 'pin_memory': True}
     lfw_loader = torch.utils.data.DataLoader(
         datasets.ImageFolder(
-            './lfw-a/lfw/',
+            './lfw-a/',
             transforms.Compose([
                 transforms.Resize((32,32)),
                 transforms.ToTensor(),

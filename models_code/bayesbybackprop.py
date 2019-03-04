@@ -249,7 +249,7 @@ def train_bbp(model, optimizer, train_loader, crossentropy, batch_size, log_inte
         )
 
         loss.backward()
-        train_loss += loss.data[0]
+        train_loss += res.loss.item()
         optimizer.step()
 
         accuracy += accuracy_score(y, np.argmax(y_.cpu().data.numpy(), axis=1))
@@ -257,7 +257,7 @@ def train_bbp(model, optimizer, train_loader, crossentropy, batch_size, log_inte
             print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
                 epoch, batch_idx * len(data), len(train_loader.dataset),
                        100. * batch_idx / len(train_loader),
-                       loss.data[0] / len(data)))
+                       loss.item() / len(data)))
 
     print('====> Epoch: {} Average loss: {:.4f} Average accuracy: {:.4f}'.format(
           epoch, train_loss / len(train_loader.dataset), accuracy / num_batches))

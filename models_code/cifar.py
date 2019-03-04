@@ -95,6 +95,9 @@ class ISCifar(Cifar):
     def cauchy_activation(self, x):
         return 1 / (1 + x ** 2)
 
+    def set_bar(self, bar):
+        self.bar = bar
+
     def forward(self, x):
         conved1 = self.relu(
             self.batchnorm1(self.conv1(x)))  # 64, 16, 16
@@ -110,14 +113,14 @@ class ISCifar(Cifar):
 
         dense1 = self.dropout(self.relu(
             self.batchnorm4(self.dense1(maxpooled3.view(-1, 240 * 4 * 4)))))
-        dense2 = self.cauchy_activation(self.dense2(dense1))
+        dense2 = self.act(self.dense2(dense1))
         dense3 = self.dense3(dense2)
         # Softmax implicit in CrossEntropyLoss
 
         batch_size = conved1.shape[0]
-        inhibited_channel = Variable(
-            torch.ones((batch_size, 1)) * self.bar
-        ).cuda()
+        inhibited_channel = (
+            dense2.sum(dim=1)
+        ).reshape(-1,1) * self.bar
 
         with_inhibited = torch.cat((dense3, inhibited_channel), dim=1)
 
