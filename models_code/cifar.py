@@ -121,7 +121,7 @@ class ISCifar(Cifar):
 
         with_inhibited = torch.cat((dense3, inhibited_channel), dim=1)
 
-        return with_inhibited
+        return with_inhibited, dense2
 
 
 class MCCifar(Cifar):

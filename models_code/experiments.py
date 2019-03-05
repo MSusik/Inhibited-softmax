@@ -133,7 +133,6 @@ def load_lfw(batch_size):
     return lfw_loader
 
 
-
 def random_generator(batch_size, channels=1):
     i = 0
     while i < 10:
@@ -159,7 +158,7 @@ def not_mnist_predictions(models, not_mnist_loader, softmaxed=True):
         data = Variable(data, volatile=True)
 
         for model_ in models:
-            output_ = model_(data[:, 0, :, :].view(-1, 1, 32, 32))
+            output_, q = model_(data[:, 0, :, :].view(-1, 1, 32, 32))
             if softmaxed:
                 y_ = softmax(output_)
             else:
@@ -281,7 +280,7 @@ def test_eval(
         data = data.cuda()
         data = Variable(data, volatile=True)
         if not sentiment and not is_sentiment:
-            y_ = model(data.view(-1, channels, 32*size_factor, 32*size_factor))
+            y_, sec_ = model(data.view(-1, channels, 32*size_factor, 32*size_factor))
         else:
             y_ = model(data.view(-1, 400))
         all_results.append(

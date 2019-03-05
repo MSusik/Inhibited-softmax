@@ -108,7 +108,7 @@ class ISMnist(Mnist):
 
         with_inhibited = torch.cat((dense3, inhibited_channel), dim=1)
 
-        return with_inhibited
+        return with_inhibited, dense2
 
     def after_activation(self, x):
 
@@ -157,8 +157,8 @@ def train(
         data = Variable(data)
         data = data.cuda()
         optimizer.zero_grad()
-        y_ = model(data.view(-1, channels, 32, 32))
-        loss = loss_function(y_, Variable(y).cuda())
+        y_, aft_cauchy = model(data.view(-1, channels, 32, 32))
+        loss = loss_function(y_, aft_cauchy, Variable(y).cuda())
         loss.backward()
         train_loss += loss.item()
         optimizer.step()
@@ -191,11 +191,11 @@ def test(
     for i, (data, y) in enumerate(test_loader):
         data = data.cuda()
         data = Variable(data, volatile=True)
-        y_ = model(data.view(-1, channels, 32, 32))
+        y_, aft_cauchy = model(data.view(-1, channels, 32, 32))
         y_s.append(softmax(y_).cpu().data.numpy())
         ys.append(y)
 
-        test_loss += loss_function(y_, Variable(y).cuda()).item()
+        test_loss += loss_function(y_, aft_cauchy, Variable(y).cuda()).item()
 
     test_loss /= len(test_loader.dataset)
     print('====> Test set loss: {:.4f}'.format(test_loss))
