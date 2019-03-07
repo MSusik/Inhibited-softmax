@@ -98,17 +98,17 @@ class ISMnist(Mnist):
         conved2 = self.maxpool(self.relu(self.conv2(conved1)))  # 16, 5, 5
 
         dense1 = self.relu(self.dense1(conved2.view(-1, 400)))
-        dense2 = self.act(self.dense2(dense1))
+        dense2 = self.cauchy_activation(self.dense2(dense1))
         dense3 = self.dense3(dense2)
         # Softmax implicit in CrossEntropyLoss
 
         batch_size = conved1.shape[0]
-        #inhibited_channel = Variable(
-        #    torch.ones((batch_size, 1)) * self.bar
-        #).cuda()
-        inhibited_channel = (
-            dense2.sum(dim=1)
-        ).reshape(-1,1) * self.bar
+        inhibited_channel = Variable(
+            torch.zeros((batch_size, 1)) * 0
+        ).cuda()
+        # inhibited_channel = (
+        #     -dense2.sum(dim=1)
+        # ).reshape(-1,1) * self.bar
 
         with_inhibited = torch.cat((dense3, inhibited_channel), dim=1)
 

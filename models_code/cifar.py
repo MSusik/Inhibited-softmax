@@ -49,41 +49,6 @@ class Cifar(nn.Module):
 
         return dense3
 
-
-class ISCifarSimple(Cifar):
-    def __init__(self):
-        super(ISCifarSimple, self).__init__()
-
-
-    def forward(self, x):
-        conved1 = self.relu(
-            self.batchnorm1(self.conv1(x)))  # 64, 16, 16
-
-        maxpooled1 = self.dropout(self.maxpool(conved1))  # 128, 4, 4
-
-        conved2 = self.relu(
-            self.batchnorm2(self.conv2(maxpooled1)))  # 192, 2, 2
-        maxpooled2 = self.dropout(self.maxpool(conved2))  # 64, 4, 4
-        conved3 = self.relu(
-            self.batchnorm3(self.conv3(maxpooled2)))  # 64, 8, 8
-        maxpooled3 = self.dropout(self.maxpool(conved3))  # 64, 4, 4
-
-        dense1 = self.dropout(self.relu(
-            self.batchnorm4(self.dense1(maxpooled3.view(-1, 240 * 4 * 4)))))
-        dense2 = self.relu(self.dense2(dense1))
-        dense3 = self.dense3(dense2)
-        # Softmax implicit in CrossEntropyLoss
-
-        batch_size = conved1.shape[0]
-        inhibited_channel = Variable(
-            torch.zeros((batch_size, 1))
-        ).cuda()
-
-        with_inhibited = torch.cat((dense3, inhibited_channel), dim=1)
-
-        return with_inhibited
-
-
 class ISCifar(Cifar):
     def __init__(self):
         super(ISCifar, self).__init__()
@@ -113,14 +78,17 @@ class ISCifar(Cifar):
 
         dense1 = self.dropout(self.relu(
             self.batchnorm4(self.dense1(maxpooled3.view(-1, 240 * 4 * 4)))))
-        dense2 = self.act(self.dense2(dense1))
+        dense2 = self.cauchy_activation(self.dense2(dense1))
         dense3 = self.dense3(dense2)
         # Softmax implicit in CrossEntropyLoss
 
         batch_size = conved1.shape[0]
-        inhibited_channel = (
-            dense2.sum(dim=1)
-        ).reshape(-1,1) * self.bar
+        inhibited_channel = Variable(
+            torch.zeros((batch_size, 1)) * 0
+        ).cuda()
+        # inhibited_channel = (
+        #     -dense2.sum(dim=1)
+        # ).reshape(-1,1) * self.bar
 
         with_inhibited = torch.cat((dense3, inhibited_channel), dim=1)
 
