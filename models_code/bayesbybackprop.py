@@ -270,7 +270,7 @@ def test_bbp(model, test_loader, crossentropy, batch_size, epoch, channels=1):
     ys = []
     for i, (data, y) in enumerate(test_loader):
         data = data.cuda()
-        data = Variable(data, volatile=True)
+        data = Variable(data)
         y_ = model(data.view(-1, channels, 32, 32))
         y_s.append(y_.cpu().data.numpy())
         ys.append(y)

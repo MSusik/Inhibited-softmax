@@ -1,9 +1,14 @@
+Update (12.03.2019):
+* We updated the repo so that it supports Pytorch 1.0.
+* We updated the methodology - please see the updated paper on Arxiv.
+* We removed the implementation of other methods - they are still available in the older commits.
+* The repository contains now the matrices for running the sentiment experiments. They are on LFS, so you need to fetch them separately.
+
 This repository contains source code that can reproduce results from the paper "Inhibited Softmax for Uncertainty Estimation in Neural Networks".
 
 Please note:
 * requirements.txt install CPU version of Pytorch that might be too slow for you
 * In order to run experiments you have to download datasets and put them in correct directories
-* Before running sentiment models, firstly you have to run preprocessing notebook
 
 I provide a script download.sh that downloads all the required files.
 

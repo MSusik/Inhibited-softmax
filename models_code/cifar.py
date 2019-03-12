@@ -6,8 +6,6 @@ from torch.autograd import Variable
 from torchvision import datasets
 from torchvision import transforms
 
-from .mnist import Activation
-
 
 class Cifar(nn.Module):
     def __init__(self):
@@ -50,47 +48,12 @@ class Cifar(nn.Module):
         return dense3
 
 
-class ISCifarSimple(Cifar):
-    def __init__(self):
-        super(ISCifarSimple, self).__init__()
-
-
-    def forward(self, x):
-        conved1 = self.relu(
-            self.batchnorm1(self.conv1(x)))  # 64, 16, 16
-
-        maxpooled1 = self.dropout(self.maxpool(conved1))  # 128, 4, 4
-
-        conved2 = self.relu(
-            self.batchnorm2(self.conv2(maxpooled1)))  # 192, 2, 2
-        maxpooled2 = self.dropout(self.maxpool(conved2))  # 64, 4, 4
-        conved3 = self.relu(
-            self.batchnorm3(self.conv3(maxpooled2)))  # 64, 8, 8
-        maxpooled3 = self.dropout(self.maxpool(conved3))  # 64, 4, 4
-
-        dense1 = self.dropout(self.relu(
-            self.batchnorm4(self.dense1(maxpooled3.view(-1, 240 * 4 * 4)))))
-        dense2 = self.relu(self.dense2(dense1))
-        dense3 = self.dense3(dense2)
-        # Softmax implicit in CrossEntropyLoss
-
-        batch_size = conved1.shape[0]
-        inhibited_channel = Variable(
-            torch.zeros((batch_size, 1))
-        ).cuda()
-
-        with_inhibited = torch.cat((dense3, inhibited_channel), dim=1)
-
-        return with_inhibited
-
-
 class ISCifar(Cifar):
     def __init__(self):
         super(ISCifar, self).__init__()
 
         self.bar = 1
         self.dense3 = nn.Linear(100, 10, bias=False)
-        self.act = Activation()
 
     def cauchy_activation(self, x):
         return 1 / (1 + x ** 2)
@@ -122,32 +85,6 @@ class ISCifar(Cifar):
         with_inhibited = torch.cat((dense3, inhibited_channel), dim=1)
 
         return with_inhibited, dense2
-
-
-class MCCifar(Cifar):
-    def __init__(self):
-        super(MCCifar, self).__init__()
-        self.dropout2 = nn.Dropout(0.25)
-
-    def forward(self, x):
-        conved1 = self.relu(
-            self.batchnorm1(self.conv1(x)))  # 64, 16, 16
-
-        maxpooled1 = self.dropout(self.maxpool(conved1))  # 128, 4, 4
-
-        conved2 = self.relu(
-            self.batchnorm2(self.conv2(maxpooled1)))  # 192, 2, 2
-        maxpooled2 = self.dropout(self.maxpool(conved2))  # 64, 4, 4
-        conved3 = self.relu(
-            self.batchnorm3(self.conv3(maxpooled2)))  # 64, 8, 8
-        maxpooled3 = self.dropout(self.maxpool(conved3))  # 64, 4, 4
-
-        dense1 = self.dropout(self.relu(
-            self.batchnorm4(self.dense1(maxpooled3.view(-1, 240 * 4 * 4)))))
-        dense2 = self.dropout2(self.relu(self.dense2(dense1)))
-        dense3 = self.dense3(dense2)
-
-        return dense3
 
 
 def load_data(batch_size, shuffle=True):

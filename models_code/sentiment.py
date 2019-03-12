@@ -21,21 +21,6 @@ class Movie(nn.Module):
         return out
 
 
-class MCMovie(Movie):
-    def __init__(self):
-        super(MCMovie, self).__init__()
-
-        self.dropout = nn.Dropout(0.5)
-
-    def forward(self, x):
-
-        embedded = self.embedding(x)
-        pooled = torch.mean(embedded, dim=1)
-        dropped  = self.dropout(pooled)
-        out = self.dense(dropped)
-        return out
-
-
 class ISMovie(Movie):
     def __init__(self):
         super(ISMovie, self).__init__()
@@ -58,7 +43,7 @@ class ISMovie(Movie):
 
         with_inhibited = torch.cat((out, inhibited_channel), dim=1)
 
-        return with_inhibited
+        return with_inhibited, pooled
 
 
 def generator_out_of_matrix(matrix_, labels_, batch_size, shuffle=True):
@@ -101,14 +86,14 @@ def train_sentiment(
         data = Variable(data)
         data = data.cuda()
         optimizer.zero_grad()
-        y_ = model(data.view(-1, 400))
+        y_, aft_cauchy = model(data.view(-1, 400))
 
         if bce:
             # BinaryCrossEntropy
             loss = loss_function(y_, Variable(y.float().view((100, 1))).cuda())
         else:
             # CrossEntropyLoss
-            loss = loss_function(y_, Variable(y).cuda())
+            loss = loss_function(y_, aft_cauchy, Variable(y).cuda())
         loss.backward()
         train_loss += loss.item()
         optimizer.step()
@@ -146,15 +131,15 @@ def test_sentiment(
     softmax = nn.Softmax()
     for i, (data, y) in enumerate(generator_out_of_matrix(test_matrix, test_labels, 100)):
         data = data.cuda()
-        data = Variable(data, volatile=True)
-        y_ = model(data.view(-1, 400))
+        data = Variable(data)
+        y_, aft_cauchy = model(data.view(-1, 400))
         y_s.append(y_.cpu().data.numpy())
         ys.append(y)
 
         if bce:
             test_loss += loss_function(y_, Variable(y.float().view((100, 1))).cuda()).item()
         else:
-            test_loss += loss_function(y_, Variable(y).cuda()).item()
+            test_loss += loss_function(y_, aft_cauchy, Variable(y).cuda()).item()
 
     test_loss /= 25000
     print('====> Test set loss: {:.4f}'.format(test_loss))

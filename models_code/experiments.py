@@ -118,6 +118,7 @@ def load_cifar_bw(batch_size):
 
     return train_loader
 
+
 def load_lfw(batch_size):
 
     kwargs = {'num_workers': 2, 'pin_memory': True}
@@ -155,7 +156,7 @@ def not_mnist_predictions(models, not_mnist_loader, softmaxed=True):
         images.append(data.cpu().numpy())
         y_s = []
         data = data.cuda()
-        data = Variable(data, volatile=True)
+        data = Variable(data)
 
         for model_ in models:
             output_, q = model_(data[:, 0, :, :].view(-1, 1, 32, 32))
@@ -190,7 +191,7 @@ def not_mnist_prediction_variational(
 
         images.append(data.cpu().numpy())
         data = data.cuda()
-        data = Variable(data, volatile=True)
+        data = Variable(data)
         y_s = []
         for j in range(num_inferences):
             output_ = model(data[:, 0, :, :].view(-1, channels, 32, 32))
@@ -225,7 +226,7 @@ def prediction_variational(
         if return_images:
             images.append(data.cpu().numpy())
         data = data.cuda()
-        data = Variable(data, volatile=True)
+        data = Variable(data)
         y_s = []
         for j in range(num_inferences):
             output_ = model(data[:, :, :, :].view(
@@ -278,11 +279,11 @@ def test_eval(
     probs = []
     for i, (data, y) in enumerate(test_loader):
         data = data.cuda()
-        data = Variable(data, volatile=True)
+        data = Variable(data)
         if not sentiment and not is_sentiment:
             y_, sec_ = model(data.view(-1, channels, 32*size_factor, 32*size_factor))
         else:
-            y_ = model(data.view(-1, 400))
+            y_, sec_ = model(data.view(-1, 400))
         all_results.append(
             y_.cpu().data.numpy()[:, :num_classes].argmax(axis=1)
         )
@@ -317,7 +318,7 @@ def test_eval_variational(
     for i, (data, y) in enumerate(test_loader):
 
         data = data.cuda()
-        data = Variable(data, volatile=True)
+        data = Variable(data)
         probs = []
         for j in range(num_inferences):
             if sentiment:

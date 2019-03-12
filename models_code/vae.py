@@ -98,7 +98,7 @@ def test_autoencoder(test_loader, model):
     test_loss = 0
     for i, (data, _) in enumerate(test_loader):
         data = data.cuda()
-        data = Variable(data, volatile=True)
+        data = Variable(data)
         recon_batch, mu, logvar = model(data)
         test_loss += loss_function(
             recon_batch,
@@ -134,7 +134,7 @@ def show_encoded_decoded_images(images, figsize=(5, 20), cols=5, titles=None):
 
 def show_decoder_quality(mini_batch, model):
     data = mini_batch.cuda()
-    data = Variable(data, volatile=True)
+    data = Variable(data)
     recon_batch, _, _ = model(data)
 
     decoded = recon_batch.cpu().data.numpy(
@@ -216,7 +216,7 @@ def create_latent_space_results_is(mesh_min, mesh_max, model, vae, delim=0.1):
         decoded_imgs.append(decoded.cpu().data.numpy())
 
         all_results.append(
-            nn.Softmax(1)(model.forward(decoded))[:, 10].cpu().data.numpy()
+            nn.Softmax(1)(model.forward(decoded)[0])[:, 10].cpu().data.numpy()
         )
 
     return np.stack(all_results), latent_X, latent_Y, decoded_imgs

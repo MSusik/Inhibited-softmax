@@ -12,17 +12,7 @@ from sklearn.metrics import accuracy_score
 from sklearn.metrics import log_loss
 
 
-class MonteCarloDropout(torch.nn.Dropout):
-    def forward(self, x):
-        return torch.nn.functional.dropout(x, self.p, True, self.inplace)
-
 class MinOfTwo(torch.nn.Module):
-    """ Simple Hack for 1D min pooling. Input size = (N, C, L_in)
-        Output size = (N, C, L_out) where N = Batch Size, C = No. Channels
-        L_in = size of 1D channel, L_out = output size after pooling.
-        This implementation does not support custom strides, padding or dialation
-        Input shape compatibilty by kernel_size needs to be ensured"""
-    
     def __init__(self):
         super(MinOfTwo, self).__init__()
 
@@ -84,10 +74,6 @@ class ISMnist(Mnist):
 
         self.dense3 = nn.Linear(84, 10, bias=False)
         self.bar = 1
-        self.act = Activation()
-
-    def set_bar(self, bar):
-        self.bar = bar
 
     def cauchy_activation(self, x):
         return 1 / (1 + x ** 2)
@@ -190,7 +176,7 @@ def test(
     softmax = nn.Softmax()
     for i, (data, y) in enumerate(test_loader):
         data = data.cuda()
-        data = Variable(data, volatile=True)
+        data = Variable(data)
         y_, aft_cauchy = model(data.view(-1, channels, 32, 32))
         y_s.append(softmax(y_).cpu().data.numpy())
         ys.append(y)
