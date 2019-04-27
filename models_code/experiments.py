@@ -247,7 +247,7 @@ def prediction_variational(
     )
 
 
-def non_distribution(test_probs, test_entropies, other_entropies, num_all, num_test):
+def non_distribution(test_entropies, other_entropies, num_all, num_test):
     disting = np.concatenate([test_entropies, other_entropies])
     target = np.zeros(num_all, dtype=np.int)
     target[num_test:] = 1

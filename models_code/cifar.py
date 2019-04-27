@@ -87,6 +87,35 @@ class ISCifar(Cifar):
         return with_inhibited, dense2
 
 
+class DeVriesCifar(Cifar):
+
+    def __init__(self):
+        super(DeVriesCifar, self).__init__()
+
+        self.confidence = nn.Linear(100, 1)
+
+    def forward(self, x):
+        conved1 = self.relu(
+            self.batchnorm1(self.conv1(x)))  # 64, 16, 16
+
+        maxpooled1 = self.dropout(self.maxpool(conved1))  # 128, 4, 4
+
+        conved2 = self.relu(
+            self.batchnorm2(self.conv2(maxpooled1)))  # 192, 2, 2
+        maxpooled2 = self.dropout(self.maxpool(conved2))  # 64, 4, 4
+        conved3 = self.relu(
+            self.batchnorm3(self.conv3(maxpooled2)))  # 64, 8, 8
+        maxpooled3 = self.dropout(self.maxpool(conved3))  # 64, 4, 4
+
+        dense1 = self.dropout(self.relu(
+            self.batchnorm4(self.dense1(maxpooled3.view(-1, 240 * 4 * 4)))))
+        dense2 = self.relu(self.dense2(dense1))
+        dense3 = self.dense3(dense2)
+        confidence = self.confidence(dense2)
+
+        return dense3, confidence
+
+
 def load_data(batch_size, shuffle=True):
 
     kwargs = {'num_workers': 1, 'pin_memory': True}

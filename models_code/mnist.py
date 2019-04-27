@@ -126,6 +126,24 @@ class MCMnist(Mnist):
         return dense3
 
 
+class DeVriesMnist(Mnist):
+
+    def __init__(self):
+        super(DeVriesMnist, self).__init__()
+
+        self.confidence = nn.Linear(84, 1)
+
+    def forward(self, x):
+        conved1 = self.maxpool(self.relu(self.conv1(x)))  # 6, 14, 14
+        conved2 = self.maxpool(self.relu(self.conv2(conved1)))  # 16, 5, 5
+        dense1 = self.relu(self.dense1(conved2.view(-1, 400)))
+        dense2 = self.relu(self.dense2(dense1))
+        dense3 = self.dense3(dense2)
+        confidence = self.confidence(dense2)
+
+        return dense3, confidence
+
+
 def train(
         epoch,
         model,
@@ -158,6 +176,28 @@ def train(
 
     print('====> Epoch: {} Average loss: {:.4f} Average accuracy: {:.4f}'.format(
           epoch, train_loss / len(train_loader.dataset), accuracy / num_batches))
+
+
+def train_devries(
+        epoch,
+        model,
+        train_loader,
+        optimizer,
+        loss_function,
+        log_interval,
+        num_batches,
+        channels=1
+):
+    model.train()
+    train_loss = 0
+    accuracy = 0
+    for batch_idx, (data, y) in enumerate(train_loader):
+        data = Variable(data)
+        data = data.cuda()
+        optimizer.zero_grad()
+        y_, confidence =  model(data.view(-1, channels, 32, 32))
+        confidence = torch.sigmoid(confidence)
+
 
 
 def test(
