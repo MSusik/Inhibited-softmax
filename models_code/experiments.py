@@ -156,14 +156,29 @@ def not_mnist_predictions(models, not_mnist_loader, softmaxed=True):
         images.append(data.cpu().numpy())
         y_s = []
         data = data.cuda()
-        data = Variable(data)
+        data = Variable(data, requires_grad=True)
+        data.retain_grad()
 
         for model_ in models:
-            output_, q = model_(data[:, 0, :, :].view(-1, 1, 32, 32))
+            model.zero_grad()
+            data_viewed = data[:, 0, :, :].view(-1, 1, 32, 32)
+            data_viewed.retain_grad()
+            output_, q = model_(data_viewed)
+
+            # Shapes?
+            loss = torch.mean(-torch.log(torch.softmax(output_, dim=1)[:, :10] / torch.softmax(output_[:, :10], dim=1)))
+            loss.backward()
+
+            data_viewed = data_viewed - 0.001 * torch.sign(data_viewed.grad)
+            new_data = Variable(data_viewed.data, requires_grad=True)
+            output_, q = model_(new_data)
+
             if softmaxed:
                 y_ = softmax(output_)
             else:
                 y_ = output_
+
+
             y_s.append(y_.cpu().data.numpy())
         y_truth.append(y.cpu().numpy())
         probs.append(np.stack(y_s))
@@ -278,12 +293,36 @@ def test_eval(
     groundtruth = []
     probs = []
     for i, (data, y) in enumerate(test_loader):
+
+        model.zero_grad()
         data = data.cuda()
-        data = Variable(data)
         if not sentiment and not is_sentiment:
-            y_, sec_ = model(data.view(-1, channels, 32*size_factor, 32*size_factor))
+            data = Variable(data, requires_grad=True)
+            data.retain_grad()
+            data_viewed = data.view(-1, channels, 32*size_factor, 32*size_factor)
+            data_viewed.retain_grad()
+            y_, sec_ = model(data_viewed)
         else:
-            y_, sec_ = model(data.view(-1, 400))
+            data = Variable(data)
+            data_viewed = data.view(-1, 400)
+            y_, sec_ = model(data_viewed)
+
+
+        # Shapes?
+        loss = torch.mean(
+            -torch.log(torch.softmax(y_, dim=1)[:, :num_classes] / torch.softmax(y_[:, :num_classes], dim=1)))
+        loss.backward()
+
+        if not sentiment and not is_sentiment:
+            data_viewed = data_viewed - 0.001 * torch.sign(data_viewed.grad)
+            new_data = Variable(data_viewed.data, requires_grad=True)
+            y_, sec_ = model(new_data)
+        else:
+            sec = model.forward_to_out(data_viewed) - 0.1 * torch.sign(torch.sum(
+                list(model.named_parameters())[1][1].grad)
+            )
+            y_ = model.forward_from_out(sec, data_viewed.shape[0])
+
         all_results.append(
             y_.cpu().data.numpy()[:, :num_classes].argmax(axis=1)
         )

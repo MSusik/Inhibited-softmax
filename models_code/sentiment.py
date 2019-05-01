@@ -31,19 +31,25 @@ class ISMovie(Movie):
 
     def forward(self, x):
 
-        embedded = self.embedding(x)
-        pooled = torch.mean(embedded, dim=1)
-        pooled = self.cauchy_activation(pooled)
-        out = self.dense(pooled)
-
+        pooled = self.forward_to_out(x)
         batch_size = x.shape[0]
+        return self.forward_from_out(pooled, batch_size), pooled
+
+    def forward_from_out(self, pooled, batch_size):
+        out = self.dense(pooled)
         inhibited_channel = Variable(
             torch.zeros((batch_size, 1))
         ).cuda()
 
         with_inhibited = torch.cat((out, inhibited_channel), dim=1)
 
-        return with_inhibited, pooled
+        return with_inhibited
+
+    def forward_to_out(self, x):
+        embedded = self.embedding(x)
+        pooled = torch.mean(embedded, dim=1)
+        pooled = self.cauchy_activation(pooled)
+        return pooled
 
 
 def generator_out_of_matrix(matrix_, labels_, batch_size, shuffle=True):
